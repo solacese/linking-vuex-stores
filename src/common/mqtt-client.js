@@ -141,8 +141,24 @@ function MqttClient({ hostUrl, username, password, clientId }) {
     })
   }
 
+  //Disconnects the client
+  async function disconnect() {
+    return new Promise((resolve, reject) => {
+      // guard: prevent attempting to interact with client that does not exist
+      if (!client) {
+        reject('Client has not connected yet')
+      }
+
+      client.end(true, cb => {
+        client = null
+        resolve(cb)
+      })
+    })
+  }
+
   return produce({}, draft => {
     draft.connect = connect
+    draft.disconnect = disconnect
     draft.send = send
     draft.addEventHandler = addEventHandler
     draft.removeEventHandler = removeEventHandler

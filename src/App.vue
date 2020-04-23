@@ -52,7 +52,7 @@ export default {
     isWaiting: true,
     player: 'Player1'
   }),
-  created() {
+  beforeMount() {
     const playerParam = new URLSearchParams(window.location.search).get(
       'player'
     )
@@ -61,29 +61,39 @@ export default {
       this.player = 'Player2'
     }
 
-    this.$mqttClient.connect().then(() => {
-      store.dispatch('login', this.player)
-      if (this.player === 'Player1') this.isWaiting = false
-      this.isMqttConnected = true
-      this.snackbarMessage = 'Succesfully connected to the broker'
-      this.snackbarShow = true
+    this.$mqttClient
+      .connect()
+      .then(() => {
+        store.dispatch('login', this.player)
+        if (this.player === 'Player1') this.isWaiting = false
+        this.isMqttConnected = true
+        this.snackbarMessage = 'Succesfully connected to the broker'
+        this.snackbarShow = true
 
-      //Subscribe to the other player's move message
-      this.$mqttClient
-        .addEventHandler(
-          (this.player === 'Player1' ? 'Player2' : 'Player1') + '/Move',
-          ({ topic, message }) => {
-            store.dispatch('receiveMove', message)
-            this.snackbarMessage = `Received ${JSON.stringify(
-              message
-            )} on topic ${topic}`
-            this.snackbarShow = true
-            this.isWaiting = false
-          }
-        )
-        .then(() => {
-          console.log('Succesfully subscribed')
-        })
+        //Subscribe to the other player's move message
+        this.$mqttClient
+          .addEventHandler(
+            (this.player === 'Player1' ? 'Player2' : 'Player1') + '/Move',
+            ({ topic, message }) => {
+              store.dispatch('receiveMove', message)
+              this.snackbarMessage = `Received ${JSON.stringify(
+                message
+              )} on topic ${topic}`
+              this.snackbarShow = true
+              this.isWaiting = false
+            }
+          )
+          .then(() => {
+            console.log('Succesfully subscribed')
+          })
+      })
+      .catch(err => {
+        console.log('Unable to connect ' + err)
+      })
+  },
+  beforeDestroy() {
+    this.$mqttClient.disconnect().then(() => {
+      console.log('Succesfully disconnected')
     })
   },
   methods: {
