@@ -65,7 +65,7 @@ function MqttClient({ hostUrl, username, password, clientId }) {
   }
 
   // publishes message to provided topic and ensures puback is received
-  async function send(topic, message, qos = 0) {
+  async function publish(topic, message, qos = 0) {
     return new Promise((resolve, reject) => {
       // guard: prevent attempting to interact with client that does not exist
       if (!client) {
@@ -86,7 +86,7 @@ function MqttClient({ hostUrl, username, password, clientId }) {
   }
 
   // adds handler, subscribes to provided topic, and ensures suback is received
-  async function addEventHandler(topic, handler, qos = 0) {
+  async function subscribe(topic, handler, qos = 0) {
     return new Promise((resolve, reject) => {
       // guard: prevent attempting to interact with client that does not exist
       if (!client) {
@@ -116,7 +116,7 @@ function MqttClient({ hostUrl, username, password, clientId }) {
   }
 
   // removes handler, unsubscribes from provided topic, and ensures unsuback is received
-  async function removeEventHandler(topic) {
+  async function unsubscribe(topic) {
     return new Promise((resolve, reject) => {
       // guard: prevent attempting to interact with client that does not exist
       if (!client) {
@@ -159,9 +159,9 @@ function MqttClient({ hostUrl, username, password, clientId }) {
   return produce({}, draft => {
     draft.connect = connect
     draft.disconnect = disconnect
-    draft.send = send
-    draft.addEventHandler = addEventHandler
-    draft.removeEventHandler = removeEventHandler
+    draft.publish = publish
+    draft.subscribe = subscribe
+    draft.unsubscribe = unsubscribe
   })
 }
 

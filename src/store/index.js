@@ -14,7 +14,7 @@ export default new Vuex.Store({
       state.player = player
       if (state.player === 'Player1') state.isTurn = true
     },
-    SWAP_TURN(state) {
+    TOGGLE_TURN(state) {
       state.isTurn = !state.isTurn
     }
   },
@@ -28,8 +28,8 @@ export default new Vuex.Store({
         console.log(
           `Sending ${JSON.stringify(move)} to ${getters.getPlayer()}/Move`
         )
-        mqttClient.send(`${getters.getPlayer()}/Move`, move).then(() => {
-          commit('SWAP_TURN')
+        mqttClient.publish(`${getters.getPlayer()}/Move`, move).then(() => {
+          commit('TOGGLE_TURN')
         })
       }
     },
@@ -38,7 +38,7 @@ export default new Vuex.Store({
         console.log(
           `Received move from other player ${JSON.stringify(otherPlayerMove)}`
         )
-        commit('SWAP_TURN')
+        commit('TOGGLE_TURN')
       }
     }
   },

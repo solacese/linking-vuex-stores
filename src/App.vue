@@ -72,7 +72,7 @@ export default {
 
         //Subscribe to the other player's move message
         this.$mqttClient
-          .addEventHandler(
+          .subscribe(
             (this.player === 'Player1' ? 'Player2' : 'Player1') + '/Move',
             ({ topic, message }) => {
               store.dispatch('receiveMove', message)
