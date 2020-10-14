@@ -1,5 +1,5 @@
 {
-  "name": "Schwab-DMR-Demo",
+  "name": "linking-vuex-stores",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,7 +11,7 @@
     "core-js": "^3.6.4",
     "immer": "^6.0.3",
     "mqtt": "^3.0.0",
-    "node-sass": "^4.14.1",
+    "node-sass": "^4.14.0",
     "sass-loader": "^8.0.2",
     "vue": "^2.6.11",
     "vue-router": "^3.1.6",

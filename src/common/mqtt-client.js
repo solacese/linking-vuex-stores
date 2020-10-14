@@ -5,58 +5,22 @@
 
 import mqtt from 'mqtt'
 import produce from 'immer'
+import { SolaceCredentials } from './solace-credentials'
 
-function MqttClient() {
+function MqttClient({ hostUrl, username, password, clientId }) {
   let client = null
   let eventHandlers = produce({}, draft => {})
-  let servers=[];
-  let serverIndex=0;
 
   // connect client to message broker,
   // configure client to dispatch events using the event handlers map,
   // and ensure a connack is received
-  async function connect(hostUrl, username, password) {
+  async function connect() {
     return new Promise((resolve, reject) => {
-
-      let servers = [];
-
-      hostUrl.split(",").forEach((item)=>{
-        let serverAndPort = item.split(':');
-        console.log(serverAndPort[0]);
-        console.log(serverAndPort[1]);
-          let server = {
-              protocol: 'wss',
-              host: serverAndPort[0],
-              port: serverAndPort[1]
-          }
-          servers.push(server);
-      })
-
-      console.log(servers);
-
-      function tryConnect() {
-      if(serverIndex==0)serverIndex=1;
-      else serverIndex=0;
-      
-      let server = [];
-      server.push(servers[serverIndex]);
-      
-      client = mqtt.connect({
-        reconnectPeriod:0,
+      client = mqtt.connect(hostUrl, {
         username: username,
         password: password,
-        servers: server
+        clientId: String(clientId)
       })
-     
-      // setTimeout(() => { resubscribe()}, 5000);
-    }
-
-    client = mqtt.connect({
-      reconnectPeriod:0,
-      username: username,
-      password: password,
-      servers: servers
-    })
       client.on('message', (topic, message) => {
         //Iterate over all subscriptions in the subscription map
         for (let sub of Array.from(Object.keys(eventHandlers))) {
@@ -90,22 +54,13 @@ function MqttClient() {
           }
         }
       })
-      client.on('reconnect',  ()=> {
-        console.log('Reconnecting...');
-        
-      })
-      
-      client.on('close',  ()=> {
-        console.log('Closing...');
-      })
-      client.on('error',  (error)=> {
-        console.log(error);
+      client.on('error', function onConnError(error) {
+        reject(error)
       })
       client.on('connect', function onConnAck() {
         console.log('MqttClient connected to broker.')
         resolve(client)
       })
-      
     })
   }
 
@@ -130,22 +85,6 @@ function MqttClient() {
     })
   }
 
-
-  function resubscribe(){
-    console.log("resubscribing...")
-    for (let sub of Array.from(Object.keys(eventHandlers))){
-      console.log(sub);
-      client.subscribe(sub, 0, function onSubAck(err, granted) {
-        // guard: err != null indicates a subscription error or an error that occurs when client is disconnecting
-        if (err) reject(err)
-        // else, subscription is verified
-        console.log(
-          `Suback received for topic "${granted[0].topic}" using QOS ${granted[0].qos}`
-        )
-      })
-    }
-  }
-
   // adds handler, subscribes to provided topic, and ensures suback is received
   async function subscribe(topic, handler, qos = 0) {
     return new Promise((resolve, reject) => {
@@ -153,10 +92,10 @@ function MqttClient() {
       if (!client) {
         reject('Client has not connected yet')
       }
-      // // guard: prevent client from attempting to add duplicate event handlers
-      // if (topic in eventHandlers) {
-      //   reject('Event already has a handler')
-      // }
+      // guard: prevent client from attempting to add duplicate event handlers
+      if (topic in eventHandlers) {
+        reject('Event already has a handler')
+      }
 
       // add event handler
       eventHandlers = produce(eventHandlers, draft => {
@@ -226,4 +165,7 @@ function MqttClient() {
   })
 }
 
-export const mqttClient = new MqttClient();
+export const mqttClient = new MqttClient({
+  ...SolaceCredentials,
+  clientId: 'Player-' + new Date().getTime()
+})
